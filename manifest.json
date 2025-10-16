@@ -1,6 +1,6 @@
 {
     "display_name": "강화된 전송 버튼 (Enhanced Send)",
-    "loading_order": 9,
+    "loading_order": 100,
     "requires": [],
     "optional": [],
     "js": "index.js",
