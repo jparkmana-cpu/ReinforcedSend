@@ -1,5 +1,5 @@
 /* All style elements for your extension go here *//* 강화된 전송 버튼의 기본 스타일 */
-#enhanced-send-button {
+.enhanced-send-button {
     background-color: #4CAF50; /* 초록색 배경 */
     color: white;
     padding: 0 12px;
@@ -16,18 +16,18 @@
 }
 
 /* 마우스를 올렸을 때 스타일 */
-#enhanced-send-button:hover {
+.enhanced-send-button:hover {
     background-color: #45a049;
 }
 
 /* 클릭했을 때 살짝 눌리는 효과 */
-#enhanced-send-button:active {
+.enhanced-send-button:active {
     transform: scale(0.95);
 }
 
 
 /* 재전송 대기 중일 때의 스타일 */
-#enhanced-send-button.waiting {
+.enhanced-send-button.waiting {
     background-color: #f44336; /* 빨간색 배경 */
     cursor: not-allowed;
     animation: pulse 1.5s infinite;
