@@ -1,11 +1,11 @@
 {
-    "display_name": "Name Displayed in SillyTavern",
-    "loading_order": 9,
+    "display_name": "강화된 전송 버튼 (Enhanced Send)",
+    "loading_order": 99,
     "requires": [],
     "optional": [],
     "js": "index.js",
     "css": "style.css",
-    "author": "yourNameHere",
+    "author": "Your_Github_ID",
     "version": "1.0.0",
-    "homePage": "yourUrlHere"
+    "homePage": "Your_Github_Repo_URL"
 }
