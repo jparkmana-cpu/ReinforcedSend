@@ -1,7 +1,7 @@
 import { extension_settings, getContext } from "../../../extensions.js";
 import { saveSettingsDebounced, send_chat, main_api } from "../../../../script.js";
 
-const extensionName = "gemini-auto-retry"; // 폴더 이름과 일치하도록 변경
+const extensionName = "enhanced-send-button"; // 폴더 이름과 일치하도록 변경
 const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
 
 // 기본 설정값
