@@ -1,5 +1,5 @@
-import { getContext } from "../../../extensions.js";
-import { eventSource, event_types } from "../../../script.js";
+import { getContext } from "../../../../extensions.js";
+import { eventSource, event_types } from "../../../../../script.js";
 import { loadSettings, settings } from "./settings.js";
 
 const extension_name = "ReinforcedSend";
