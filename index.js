@@ -1,4 +1,5 @@
-import { getContext, extension_path } from "../../../../extensions.js";
+// 올바른 코드 (수정)
+import { getContext, extension_path } from "../../../extensions.js";
 import { eventSource, event_types } from "../../../../script.js";
 import { loadSettings, settings } from "./settings.js";
 
