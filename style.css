@@ -1,47 +1,21 @@
-/* All style elements for your extension go here *//* 강화된 전송 버튼의 기본 스타일 */
-.enhanced-send-button {
-    background-color: #4CAF50; /* 초록색 배경 */
-    color: white;
-    padding: 0 12px;
-    border: none;
-    border-radius: 5px;
+#reinforced_send_button {
+    font-size: 1.2em;
+    color: var(--SmartThemeAccent);
     cursor: pointer;
-    font-size: 18px; /* 아이콘 크기 */
-    margin-left: 8px; /* 원래 전송 버튼과의 간격 */
-    height: 38px; /* 원래 전송 버튼과 높이 맞춤 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.3s, transform 0.1s;
 }
 
-/* 마우스를 올렸을 때 스타일 */
-.enhanced-send-button:hover {
-    background-color: #45a049;
-}
-
-/* 클릭했을 때 살짝 눌리는 효과 */
-.enhanced-send-button:active {
-    transform: scale(0.95);
-}
-
-
-/* 재전송 대기 중일 때의 스타일 */
-.enhanced-send-button.waiting {
-    background-color: #f44336; /* 빨간색 배경 */
-    cursor: not-allowed;
+/* 재시도 중일 때 버튼에 적용할 스타일 */
+#reinforced_send_button.retrying #reinforced_send_icon {
     animation: pulse 1.5s infinite;
 }
 
-/* 대기 중일 때 깜빡이는 애니메이션 */
+/* 수동 중지 아이콘 스타일 */
+#reinforced_send_button.retrying #reinforced_send_icon.stop-icon {
+    color: #dc3545; /* 중지를 의미하는 붉은색 */
+}
+
 @keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
-    }
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
 }
