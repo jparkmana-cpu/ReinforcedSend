@@ -1,134 +1,117 @@
-import { extension_settings, getContext } from "../../../extensions.js";
-import { saveSettingsDebounced, send_chat, main_api } from "../../../../script.js";
+import { getContext, extension_path } from "../../../../extensions.js";
+import { eventSource, event_types } from "../../../../script.js";
+import { loadSettings, settings } from "./settings.js";
 
-const extensionName = "enhanced-send-button"; // 폴더 이름과 일치하도록 변경
-const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
+const extension_name = "ReinforcedSend";
 
-// 기본 설정값
-const defaultSettings = {
-    enabled: true,
-    retryDelay: 30, // 30초
-    maxRetries: 5,
-};
-
-// 재전송 상태를 관리하는 변수들
-let isWaitingForResponse = false;
+// 상태 관리 변수
+let isRetrying = false;
 let retryTimer = null;
+let lastMessage = '';
 let retryCount = 0;
-let lastMessageContent = "";
 
-// 설정 로드
-async function loadSettings() {
-    extension_settings[extensionName] = extension_settings[extensionName] || {};
-    Object.assign(defaultSettings, extension_settings[extensionName]);
-    extension_settings[extensionName] = defaultSettings;
+// UI 요소 캐싱
+let buttonElement;
+let iconElement;
 
-    // UI에 설정값 반영
-    $("#es_enabled").prop("checked", defaultSettings.enabled);
-    $("#es_retry_delay").val(defaultSettings.retryDelay);
-    $("#es_max_retries").val(defaultSettings.maxRetries);
+// [동작 1] 버튼의 상태와 모양을 업데이트하는 함수
+function updateButtonState(state) {
+    switch (state) {
+        case 'retrying':
+            buttonElement.classList.add('retrying');
+            buttonElement.title = "재전송 중... (클릭하여 중지)";
+            iconElement.className = 'fa-solid fa-circle-stop stop-icon'; // 중지 아이콘으로 변경
+            break;
+        case 'idle':
+        default:
+            buttonElement.classList.remove('retrying');
+            buttonElement.title = "강화된 전송 (응답 없을 시 자동 재시도)";
+            iconElement.className = 'fa-solid fa-shield-halved'; // 원래 방패 아이콘으로 복원
+            break;
+    }
 }
 
-// 설정 변경 시 호출되는 함수
-function onSettingsChange() {
-    defaultSettings.enabled = $("#es_enabled").prop("checked");
-    defaultSettings.retryDelay = Number($("#es_retry_delay").val());
-    defaultSettings.maxRetries = Number($("#es_max_retries").val());
-    saveSettingsDebounced();
-}
+// [동작 2] 재전송 성공 또는 수동 중지 시 모든 상태를 초기화하는 함수
+function stopAndReset(reason) {
+    if (!isRetrying) return;
 
-// 재전송 상태를 초기화하는 함수
-function resetRetryState() {
+    if (reason === 'success') {
+        console.log("[Reinforced Send] Response received. Stopping.");
+        toastr.success("AI 응답을 받았습니다.", "강화된 전송");
+    } else if (reason === 'manual') {
+        console.log("[Reinforced Send] Manually stopped.");
+        toastr.warning("재전송을 수동으로 중지했습니다.", "강화된 전송");
+    } else if (reason === 'fail') {
+        console.log(`[Reinforced Send] Max retries (${settings.max_retries}) reached. Stopping.`);
+        toastr.error(`최대 재시도 횟수(${settings.max_retries}회)에 도달하여 전송을 중단합니다.`, "강화된 전송");
+    }
+
     clearTimeout(retryTimer);
-    isWaitingForResponse = false;
+    isRetrying = false;
+    lastMessage = '';
+    retryTimer = null;
     retryCount = 0;
-    lastMessageContent = "";
-    $("#enhanced-send-button").removeClass("waiting").prop("disabled", false).text("🚀");
-    console.log("[Enhanced Send] 재전송 상태가 초기화되었습니다.");
+    updateButtonState('idle');
 }
 
-// 재전송을 시도하는 함수
-function attemptRetry() {
-    if (!isWaitingForResponse) return;
+// [동작 3] 재전송 로직
+function retrySend() {
+    if (!isRetrying) return;
 
     retryCount++;
-    if (retryCount > defaultSettings.maxRetries) {
-        toastr.error(`최대 재시도 횟수(${defaultSettings.maxRetries}회)를 초과했습니다.`, "전송 실패");
-        resetRetryState();
-        return;
-    }
-
-    toastr.info(`${retryCount}번째 재전송을 시도합니다...`, "응답 없음");
-    send_chat(lastMessageContent); // 마지막 메시지를 다시 보냄
-
-    // 다음 재시도 타이머 설정
-    retryTimer = setTimeout(attemptRetry, defaultSettings.retryDelay * 1000);
-}
-
-// 강화된 전송 버튼 클릭 시 실행될 메인 함수
-function onEnhancedSend() {
-    if (isWaitingForResponse) {
-        toastr.warning("이미 응답을 기다리는 중입니다. 취소하려면 버튼을 다시 누르세요.");
-        resetRetryState();
-        return;
-    }
-
-    // 현재 API가 Gemini인지 확인 (선택적이지만 유용함)
-    if (main_api !== 'gemini') {
-        toastr.warning('현재 API가 Gemini가 아닙니다. 일반 전송으로 처리합니다.');
-        // #send_but 클릭을 시뮬레이션하여 일반 전송 실행
-        $('#send_but').click();
+    if (retryCount > settings.max_retries) {
+        stopAndReset('fail');
         return;
     }
 
     const context = getContext();
-    const message = context.userInput;
+    console.log(`[Reinforced Send] Retrying send (Attempt ${retryCount}/${settings.max_retries}).`);
+    toastr.info(`AI 응답이 없어 메시지를 다시 전송합니다. (시도 ${retryCount}/${settings.max_retries})`, "강화된 전송");
 
-    if (!message.trim()) return;
+    context.sendSystemMessage('send', lastMessage);
+    retryTimer = setTimeout(retrySend, settings.retry_delay * 1000);
+}
 
-    isWaitingForResponse = true;
-    lastMessageContent = message;
+// [동작 4] 메인 버튼 클릭 핸들러
+async function handleButtonClick() {
+    // 이미 재시도 중일 때 클릭하면, 수동 중지 기능으로 작동
+    if (isRetrying) {
+        stopAndReset('manual');
+        return;
+    }
+
+    const context = getContext();
+    const textarea = document.getElementById('send_textarea');
+    const messageText = textarea.value.trim();
+
+    if (!messageText) return;
+
+    console.log("[Reinforced Send] Initial send.");
+    isRetrying = true;
+    lastMessage = messageText;
     retryCount = 0;
 
-    // UI 업데이트: 대기 상태로 변경
-    $("#enhanced-send-button").addClass("waiting").prop("disabled", true).text("⏳");
-
-    // 첫 메시지 전송
-    send_chat(message);
-
-    // 재시도 타이머 시작
-    retryTimer = setTimeout(attemptRetry, defaultSettings.retryDelay * 1000);
+    updateButtonState('retrying');
+    context.submitMessage();
+    retryTimer = setTimeout(retrySend, settings.retry_delay * 1000);
 }
 
-// 채팅 메시지가 생성될 때마다 응답을 감지하는 함수
-function onMessageGenerated() {
-    if (isWaitingForResponse) {
-        // is_user 클래스가 없는, 즉 AI의 응답이 오면
-        const latestMessage = $('#chat .mes:not(.is_user)').last();
-        if (latestMessage.length) {
-            console.log("[Enhanced Send] AI 응답을 감지했습니다.");
-            toastr.success("AI 응답을 받았습니다!", "전송 성공");
-            resetRetryState();
-        }
-    }
-}
-
-// 확장 프로그램이 로드될 때 실행
+// [초기화] jQuery 로드 후 실행
 jQuery(async () => {
-    const settingsHtml = await $.get(`${extensionFolderPath}/settings.html`);
-    $("#extensions_settings2").append(settingsHtml); // 오른쪽 컬럼에 설정 UI 추가
-
-    // 강화된 전송 버튼 생성 및 추가
-    const enhancedButton = $('<button id="enhanced-send-button" title="강화된 전송">🚀</button>');
-    $('#send_but').parent().append(enhancedButton);
-
-    // 이벤트 리스너 등록
-    enhancedButton.on("click", onEnhancedSend);
-    $("#es_enabled, #es_retry_delay, #es_max_retries").on("input", onSettingsChange);
-
-    // MutationObserver를 사용하여 채팅창의 변화 감지
-    const observer = new MutationObserver(onMessageGenerated);
-    observer.observe(document.getElementById('chat'), { childList: true });
-
+    // 1. 설정부터 로드
     loadSettings();
+
+    // 2. UI 템플릿 로드 및 삽입
+    const buttonHtml = await $.get(`${extension_path}/${extension_name}/templates/button.html`);
+    $('#send_but').before(buttonHtml);
+
+    // 3. UI 요소 캐싱 및 이벤트 연결
+    buttonElement = document.getElementById('reinforced_send_button');
+    iconElement = document.getElementById('reinforced_send_icon');
+    buttonElement.addEventListener('click', handleButtonClick);
+    
+    // 4. SillyTavern 이벤트 리스너 설정
+    const successCallback = () => stopAndReset('success');
+    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, successCallback);
+    eventSource.on(event_types.GENERATE_FOR_CHAT_START, successCallback);
 });
