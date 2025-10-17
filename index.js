@@ -1,6 +1,5 @@
-// 올바른 코드 (수정)
-import { getContext, extension_path } from "../../../extensions.js";
-import { eventSource, event_types } from "../../../../script.js";
+import { getContext } from "../../../extensions.js";
+import { eventSource, event_types } from "../../../script.js";
 import { loadSettings, settings } from "./settings.js";
 
 const extension_name = "ReinforcedSend";
@@ -21,13 +20,13 @@ function updateButtonState(state) {
         case 'retrying':
             buttonElement.classList.add('retrying');
             buttonElement.title = "재전송 중... (클릭하여 중지)";
-            iconElement.className = 'fa-solid fa-circle-stop stop-icon'; // 중지 아이콘으로 변경
+            iconElement.className = 'fa-solid fa-circle-stop stop-icon';
             break;
         case 'idle':
         default:
             buttonElement.classList.remove('retrying');
             buttonElement.title = "강화된 전송 (응답 없을 시 자동 재시도)";
-            iconElement.className = 'fa-solid fa-shield-halved'; // 원래 방패 아이콘으로 복원
+            iconElement.className = 'fa-solid fa-shield-halved';
             break;
     }
 }
@@ -75,7 +74,6 @@ function retrySend() {
 
 // [동작 4] 메인 버튼 클릭 핸들러
 async function handleButtonClick() {
-    // 이미 재시도 중일 때 클릭하면, 수동 중지 기능으로 작동
     if (isRetrying) {
         stopAndReset('manual');
         return;
@@ -103,7 +101,8 @@ jQuery(async () => {
     loadSettings();
 
     // 2. UI 템플릿 로드 및 삽입
-    const buttonHtml = await $.get(`${extension_path}/${extension_name}/templates/button.html`);
+    const modulePath = `/scripts/extensions/third-party/${extension_name}`;
+    const buttonHtml = await $.get(`${modulePath}/templates/button.html`);
     $('#send_but').before(buttonHtml);
 
     // 3. UI 요소 캐싱 및 이벤트 연결
@@ -115,4 +114,6 @@ jQuery(async () => {
     const successCallback = () => stopAndReset('success');
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, successCallback);
     eventSource.on(event_types.GENERATE_FOR_CHAT_START, successCallback);
+    
+    console.log("[Reinforced Send] Extension loaded successfully!");
 });
