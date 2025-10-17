@@ -1,4 +1,4 @@
-import { getContext, extension_settings } from "../../../../../scripts/extensions.js"
+import { getContext, extension_settings, extension_path } from "../../../extensions.js";
 
 const extension_name = "ReinforcedSend";
 
