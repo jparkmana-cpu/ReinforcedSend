@@ -1,4 +1,4 @@
-import { getContext, extension_settings, extension_path } from "../../../extensions.js";
+import { getContext, extension_settings } from "../../../extensions.js";
 
 const extension_name = "ReinforcedSend";
 
@@ -22,7 +22,8 @@ function onSettingsChanged() {
 
 // 설정 UI를 로드하는 함수
 async function loadSettingsUI() {
-    const settingsHtml = await $.get(`${extension_path}/${extension_name}/templates/settings_panel.html`);
+    const modulePath = `/scripts/extensions/third-party/${extension_name}`;
+    const settingsHtml = await $.get(`${modulePath}/templates/settings_panel.html`);
     $('#extensions_settings').append(settingsHtml);
 
     // 저장된 값으로 UI 초기화
