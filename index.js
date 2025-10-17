@@ -1,4 +1,4 @@
-import { getContext } from "../../../../extensions.js";
+import { getContext } from "../../../../../scripts/extensions.js"
 import { eventSource, event_types } from "../../../../../script.js";
 import { loadSettings, settings } from "./settings.js";
 
