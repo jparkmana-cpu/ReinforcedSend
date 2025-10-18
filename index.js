@@ -9,6 +9,7 @@ let isRetrying = false;
 let retryTimer = null;
 let lastMessage = '';
 let retryCount = 0;
+let generationStarted = false; // 생성이 시작되었는지 추적
 
 // UI 요소 캐싱
 let buttonElement;
@@ -109,12 +110,15 @@ async function handleButtonClick(event) {
     
     // 여러 방법 시도
     try {
-        console.log("[Reinforced Send] Method 1: Trying $('#send_but').trigger('click')");
+        console.log("[Reinforced Send] Triggering send button");
+        console.log("[Reinforced Send] Retry delay setting:", settings.retry_delay, "seconds");
+        
         $('#send_but').trigger('click');
         
         // 대기 시간 후 재시도 타이머 시작
-        retryTimer = setTimeout(retrySend, settings.retry_delay * 1000);
-        console.log("[Reinforced Send] Retry timer set for", settings.retry_delay, "seconds");
+        const delayMs = settings.retry_delay * 1000;
+        console.log("[Reinforced Send] Setting retry timer for", delayMs, "ms");
+        retryTimer = setTimeout(retrySend, delayMs);
     } catch (error) {
         console.error("[Reinforced Send] Error during initial send:", error);
         stopAndReset('fail');
@@ -162,15 +166,16 @@ jQuery(async () => {
     buttonElement.addEventListener('click', handleButtonClick);
     console.log("[Reinforced Send] Click handler attached");
     
-    // 4. SillyTavern 이벤트 리스너 설정
-    const successCallback = () => {
-        console.log("[Reinforced Send] Success callback triggered");
+    // 4. SillyTavern 이벤트 리스너 설정 - AI 응답만 감지
+    const characterMessageCallback = () => {
+        console.log("[Reinforced Send] Character message received - stopping retry");
         stopAndReset('success');
     };
     
-    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, successCallback);
-    eventSource.on(event_types.USER_MESSAGE_RENDERED, successCallback);
-    console.log("[Reinforced Send] Event listeners attached");
+    // CHARACTER_MESSAGE_RENDERED만 사용 (AI 응답만 감지)
+    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, characterMessageCallback);
+    eventSource.on(event_types.MESSAGE_RECEIVED, characterMessageCallback);
+    console.log("[Reinforced Send] Event listeners attached (CHARACTER only)");
     
     console.log("[Reinforced Send] Extension loaded successfully!");
     toastr.success("강화된 전송 버튼이 활성화되었습니다.", "확장 로드");
