@@ -97,14 +97,8 @@ async function handleButtonClick(event) {
     const textarea = document.getElementById('send_textarea');
     console.log("[Reinforced Send] Textarea element:", textarea);
     
-    const messageText = textarea?.value.trim();
+    const messageText = textarea?.value || '';
     console.log("[Reinforced Send] Message text:", messageText);
-
-    if (!messageText) {
-        console.log("[Reinforced Send] No message text");
-        toastr.warning("메시지를 입력해주세요.", "강화된 전송");
-        return;
-    }
 
     console.log("[Reinforced Send] Starting initial send...");
     isRetrying = true;
