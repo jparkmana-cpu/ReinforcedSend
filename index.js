@@ -1,5 +1,5 @@
 import { getContext } from "../../../extensions.js";
-import { eventSource, event_types, Generate } from "../../../../script.js";
+import { eventSource, event_types, Generate } from "../../../script.js";
 import { loadSettings, settings } from "./settings.js";
 
 const extension_name = "ReinforcedSend";
@@ -168,8 +168,10 @@ jQuery(async () => {
         stopAndReset('success');
     };
     
+    // AI가 응답을 시작하면 즉시 중지
+    eventSource.on(event_types.MESSAGE_RECEIVED, successCallback);
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, successCallback);
-    eventSource.on(event_types.USER_MESSAGE_RENDERED, successCallback);
+    eventSource.on(event_types.IMPERSONATE_READY, successCallback);
     console.log("[Reinforced Send] Event listeners attached");
     
     console.log("[Reinforced Send] Extension loaded successfully!");
